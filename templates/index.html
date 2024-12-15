@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sommelier Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Sommelier Virtual</h1>
+
+    <!-- Contenedor del chat -->
+    <div id="chat-container" class="chat-container">
+        <!-- Mensajes del chat -->
+        <div id="chat-box" class="chat-box"></div>
+
+        <!-- Formulario para enviar mensajes -->
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Escribe tu consulta..." required>
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+    <script>
+        const chatForm = document.getElementById("chat-form");
+        const chatBox = document.getElementById("chat-box");
+        let history = []; // Historial de mensajes
+
+        chatForm.addEventListener("submit", async function (e) {
+            e.preventDefault();
+
+            // Obtener el mensaje del usuario
+            const userInput = document.getElementById("user-input").value;
+            document.getElementById("user-input").value = ""; // Limpiar el campo de entrada
+
+            // Mostrar el mensaje del usuario en el chat
+            chatBox.innerHTML += `<div class="user-message">👤: ${userInput}</div>`;
+
+            try {
+                // Enviar la consulta al backend
+                const response = await fetch("/chat/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: userInput, history: history })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Error en el servidor.");
+                }
+
+                const data = await response.json();
+                const reply = data.reply;
+                history = data.history; // Actualizar el historial
+
+                // Mostrar la respuesta del asistente en el chat
+                chatBox.innerHTML += `<div class="assistant-message">🤖: ${reply}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight; // Desplazar hacia abajo
+            } catch (error) {
+                chatBox.innerHTML += `<div class="error-message">❌: ${error.message}</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight; // Desplazar hacia abajo
+            }
+        });
+    </script>
+</body>
+</html>

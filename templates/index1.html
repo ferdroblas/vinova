@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recomendación de Vinos</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Recomendación de Vinos</h1>
+
+    <!-- Formulario para ingresar la comida -->
+    <form id="food-form">
+        <label for="query">Ingresa la comida:</label>
+        <input type="text" id="query" name="query" placeholder="Ej. guiso de lentejas" required>
+        <button type="submit">Obtener Recomendación</button>
+    </form>
+
+    <!-- Contenedor para mostrar la recomendación -->
+    <div id="recommendation-container" class="recommendation-container"></div>
+
+    <script>
+        document.getElementById("food-form").addEventListener("submit", async function (e) {
+            e.preventDefault(); // Evitar recargar la página
+
+            const query = document.getElementById("query").value;
+            const container = document.getElementById("recommendation-container");
+
+            // Mostrar mensaje de carga
+            container.innerHTML = "<p>Cargando recomendación...</p>";
+
+            try {
+                // Enviar la consulta al backend
+                const response = await fetch("/recommendations/", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query: query })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Error en el servidor.");
+                }
+
+                const data = await response.json();
+
+                // Extraer y formatear los datos
+                const vino = JSON.parse(data.response).vino;
+
+                // Crear el contenido dinámico
+                const content = `
+                    <h2>${vino.bodega} - ${vino.varietales.join(", ")} - ${vino.cosecha}</h2>
+                    <p><i>${vino.descripcion}</i></p>
+                    <h3>📝 Notas de cata:</h3>
+                    <ul>
+                        <li>👀 Vista: ${vino.notas_de_cata.vista}</li>
+                        <li>👃 Nariz: ${vino.notas_de_cata.nariz}</li>
+                        <li>👅 Boca: ${vino.notas_de_cata.boca}</li>
+                    </ul>
+                    <p>🌡️ Temperatura de servicio: <strong>${vino.temperatura_de_servicio}</strong></p>
+                    <h3>🍽️ Maridajes:</h3>
+                    <ul>
+                        <li>${vino.maridaje_1}</li>
+                        <li>${vino.maridaje_2}</li>
+                        <li>${vino.maridaje_3}</li>
+                    </ul>
+                    <p>🛒 Precio: <strong>${vino.precio_supermercado}</strong></p>
+                    <img src="${vino.imagen}" alt="Imagen del vino">
+                `;
+
+                container.innerHTML = content;
+            } catch (error) {
+                container.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
